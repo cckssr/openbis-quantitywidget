@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantityWidget Demo - OpenBIS</title>
+    <link rel="stylesheet" href="../src/QuantityWidget.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #1f2937;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+        
+        .demo-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background-color: #fafbfc;
+        }
+        
+        .demo-section h2 {
+            margin-top: 0;
+            color: #374151;
+        }
+        
+        .demo-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .demo-label {
+            min-width: 150px;
+            font-weight: 500;
+            color: #4b5563;
+        }
+        
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f1f5f9;
+            border-radius: 4px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .output h3 {
+            margin-top: 0;
+            color: #1e40af;
+        }
+        
+        .output-item {
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 5px 8px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f9ff;
+            border-radius: 4px;
+        }
+        
+        .controls button {
+            margin: 5px;
+            padding: 8px 16px;
+            border: 1px solid #3b82f6;
+            background: #3b82f6;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .controls button:hover {
+            background: #2563eb;
+        }
+        
+        .controls button.secondary {
+            background: white;
+            color: #3b82f6;
+        }
+        
+        .controls button.secondary:hover {
+            background: #f0f9ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>QuantityWidget Demo - OpenBIS</h1>
+        
+        <div class="demo-section">
+            <h2>Length Measurements</h2>
+            <div class="demo-row">
+                <span class="demo-label">Sample Length:</span>
+                <div id="length-widget"></div>
+            </div>
+            <div class="demo-row">
+                <span class="demo-label">Distance:</span>
+                <div id="distance-widget"></div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>Mass Measurements</h2>
+            <div class="demo-row">
+                <span class="demo-label">Sample Mass:</span>
+                <div id="mass-widget"></div>
+            </div>
+            <div class="demo-row">
+                <span class="demo-label">Reagent Weight:</span>
+                <div id="weight-widget"></div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>Volume Measurements</h2>
+            <div class="demo-row">
+                <span class="demo-label">Solution Volume:</span>
+                <div id="volume-widget"></div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>Temperature</h2>
+            <div class="demo-row">
+                <span class="demo-label">Reaction Temp:</span>
+                <div id="temperature-widget"></div>
+            </div>
+        </div>
+        
+        <div class="output">
+            <h3>Real-time Values (in base units for backend storage)</h3>
+            <div id="output-values"></div>
+        </div>
+        
+        <div class="controls">
+            <h3>Test Controls</h3>
+            <button onclick="setTestValues()">Set Test Values</button>
+            <button onclick="toggleDisabled()" class="secondary">Toggle Disabled</button>
+            <button onclick="changeDimensions()" class="secondary">Change Dimensions</button>
+            <button onclick="clearValues()" class="secondary">Clear All</button>
+        </div>
+    </div>
+
+    <!-- We'll use ES modules for modern browsers -->
+    <script type="module">
+        // Import the convert library (in real deployment, this would be bundled)
+        // For demo purposes, we'll load it from CDN
+        import { convert } from 'https://cdn.skypack.dev/convert';
+        
+        // Since we can't import ES modules from our local file easily in this demo,
+        // we'll include the QuantityWidget code inline for now
+        
+        class QuantityWidget {
+            constructor(options = {}) {
+                this.element = null;
+                this.options = {
+                    dimension: options.dimension || 'Length',
+                    baseUnit: options.baseUnit || this.getDefaultBaseUnit(options.dimension || 'Length'),
+                    value: options.value || 0,
+                    unit: options.unit || this.getDefaultBaseUnit(options.dimension || 'Length'),
+                    placeholder: options.placeholder || 'Enter value',
+                    disabled: options.disabled || false,
+                    onChange: options.onChange || (() => {}),
+                    ...options
+                };
+                
+                this.unitsByDimension = this.initializeUnits();
+                this.render();
+            }
+
+            getDefaultBaseUnit(dimension) {
+                const baseUnits = {
+                    'Length': 'm',
+                    'Mass': 'kg', 
+                    'Volume': 'l',
+                    'Area': 'm2',
+                    'Temperature': 'C',
+                    'Time': 's',
+                    'Pressure': 'Pa',
+                    'Energy': 'J',
+                    'Power': 'W',
+                    'Force': 'N',
+                    'Angle': 'rad',
+                    'Data': 'B'
+                };
+                return baseUnits[dimension] || 'm';
+            }
+
+            initializeUnits() {
+                const unitsByDimension = {
+                    'Length': [
+                        { value: 'nm', label: 'nanometer (nm)' },
+                        { value: 'μm', label: 'micrometer (μm)' },
+                        { value: 'mm', label: 'millimeter (mm)' },
+                        { value: 'cm', label: 'centimeter (cm)' },
+                        { value: 'm', label: 'meter (m)' },
+                        { value: 'km', label: 'kilometer (km)' },
+                        { value: 'in', label: 'inch (in)' },
+                        { value: 'ft', label: 'foot (ft)' },
+                        { value: 'yd', label: 'yard (yd)' },
+                        { value: 'mi', label: 'mile (mi)' }
+                    ],
+                    'Mass': [
+                        { value: 'mg', label: 'milligram (mg)' },
+                        { value: 'g', label: 'gram (g)' },
+                        { value: 'kg', label: 'kilogram (kg)' },
+                        { value: 't', label: 'metric ton (t)' },
+                        { value: 'oz', label: 'ounce (oz)' },
+                        { value: 'lb', label: 'pound (lb)' }
+                    ],
+                    'Volume': [
+                        { value: 'ml', label: 'milliliter (ml)' },
+                        { value: 'l', label: 'liter (l)' },
+                        { value: 'fl-oz', label: 'fluid ounce (fl oz)' },
+                        { value: 'pt', label: 'pint (pt)' },
+                        { value: 'qt', label: 'quart (qt)' },
+                        { value: 'gal', label: 'gallon (gal)' }
+                    ],
+                    'Temperature': [
+                        { value: 'C', label: 'Celsius (°C)' },
+                        { value: 'F', label: 'Fahrenheit (°F)' },
+                        { value: 'K', label: 'Kelvin (K)' }
+                    ]
+                };
+                return unitsByDimension;
+            }
+
+            getUnitsForDimension() {
+                return this.unitsByDimension[this.options.dimension] || [];
+            }
+
+            convertToBaseUnit(value, fromUnit) {
+                if (fromUnit === this.options.baseUnit) {
+                    return value;
+                }
+                try {
+                    return convert(value, fromUnit).to(this.options.baseUnit);
+                } catch (error) {
+                    console.warn(`Conversion failed from ${fromUnit} to ${this.options.baseUnit}:`, error);
+                    return value;
+                }
+            }
+
+            convertFromBaseUnit(value, toUnit) {
+                if (toUnit === this.options.baseUnit) {
+                    return value;
+                }
+                try {
+                    return convert(value, this.options.baseUnit).to(toUnit);
+                } catch (error) {
+                    console.warn(`Conversion failed from ${this.options.baseUnit} to ${toUnit}:`, error);
+                    return value;
+                }
+            }
+
+            getValueInBaseUnits() {
+                const inputValue = parseFloat(this.numberInput.value) || 0;
+                const currentUnit = this.unitSelect.value;
+                return this.convertToBaseUnit(inputValue, currentUnit);
+            }
+
+            setValueFromBaseUnits(baseValue, displayUnit = null) {
+                const targetUnit = displayUnit || this.unitSelect.value;
+                const displayValue = this.convertFromBaseUnit(baseValue, targetUnit);
+                this.numberInput.value = displayValue.toFixed(6).replace(/\.?0+$/, '');
+                if (displayUnit) {
+                    this.unitSelect.value = displayUnit;
+                }
+            }
+
+            render() {
+                this.element = document.createElement('div');
+                this.element.className = 'quantity-widget';
+                this.element.innerHTML = `
+                    <div class="quantity-widget__container">
+                        <input 
+                            type="number" 
+                            class="quantity-widget__input" 
+                            placeholder="${this.options.placeholder}"
+                            ${this.options.disabled ? 'disabled' : ''}
+                            step="any"
+                        />
+                        <select 
+                            class="quantity-widget__select"
+                            ${this.options.disabled ? 'disabled' : ''}
+                        >
+                            ${this.getUnitsForDimension().map(unit => 
+                                `<option value="${unit.value}" ${unit.value === this.options.unit ? 'selected' : ''}>${unit.label}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                `;
+
+                this.numberInput = this.element.querySelector('.quantity-widget__input');
+                this.unitSelect = this.element.querySelector('.quantity-widget__select');
+
+                const displayValue = this.convertFromBaseUnit(this.options.value, this.options.unit);
+                this.numberInput.value = displayValue.toFixed(6).replace(/\.?0+$/, '');
+
+                this.setupEventListeners();
+                return this.element;
+            }
+
+            setupEventListeners() {
+                const handleChange = () => {
+                    const baseValue = this.getValueInBaseUnits();
+                    this.options.onChange({
+                        value: baseValue,
+                        unit: this.options.baseUnit,
+                        displayValue: parseFloat(this.numberInput.value) || 0,
+                        displayUnit: this.unitSelect.value,
+                        dimension: this.options.dimension
+                    });
+                };
+
+                this.numberInput.addEventListener('input', handleChange);
+                this.numberInput.addEventListener('change', handleChange);
+                
+                this.unitSelect.addEventListener('change', () => {
+                    const currentDisplayValue = parseFloat(this.numberInput.value) || 0;
+                    const oldUnit = this.options.unit;
+                    const newUnit = this.unitSelect.value;
+                    
+                    try {
+                        const convertedValue = convert(currentDisplayValue, oldUnit).to(newUnit);
+                        this.numberInput.value = convertedValue.toFixed(6).replace(/\.?0+$/, '');
+                        this.options.unit = newUnit;
+                    } catch (error) {
+                        console.warn(`Unit conversion failed from ${oldUnit} to ${newUnit}:`, error);
+                    }
+                    
+                    handleChange();
+                });
+            }
+
+            setValue(baseValue, displayUnit = null) {
+                this.options.value = baseValue;
+                this.setValueFromBaseUnits(baseValue, displayUnit);
+            }
+
+            getValue() {
+                return this.getValueInBaseUnits();
+            }
+
+            setDisabled(disabled) {
+                this.options.disabled = disabled;
+                this.numberInput.disabled = disabled;
+                this.unitSelect.disabled = disabled;
+            }
+
+            setDimension(dimension) {
+                this.options.dimension = dimension;
+                this.options.baseUnit = this.getDefaultBaseUnit(dimension);
+                
+                const units = this.getUnitsForDimension();
+                this.unitSelect.innerHTML = units.map(unit => 
+                    `<option value="${unit.value}">${unit.label}</option>`
+                ).join('');
+                
+                if (units.length > 0) {
+                    this.unitSelect.value = units[0].value;
+                    this.options.unit = units[0].value;
+                }
+            }
+        }
+
+        // Create widget instances
+        const widgets = {};
+        
+        // Length widgets
+        widgets.length = new QuantityWidget({
+            dimension: 'Length',
+            value: 1.5, // 1.5 meters
+            unit: 'm',
+            placeholder: 'Enter length',
+            onChange: updateOutput
+        });
+        
+        widgets.distance = new QuantityWidget({
+            dimension: 'Length',
+            value: 1000, // 1000 meters = 1 km
+            unit: 'km',
+            placeholder: 'Enter distance',
+            onChange: updateOutput
+        });
+        
+        // Mass widgets
+        widgets.mass = new QuantityWidget({
+            dimension: 'Mass',
+            value: 0.25, // 0.25 kg = 250g
+            unit: 'g',
+            placeholder: 'Enter mass',
+            onChange: updateOutput
+        });
+        
+        widgets.weight = new QuantityWidget({
+            dimension: 'Mass',
+            value: 2.5, // 2.5 kg
+            unit: 'kg',
+            placeholder: 'Enter weight',
+            onChange: updateOutput
+        });
+        
+        // Volume widget
+        widgets.volume = new QuantityWidget({
+            dimension: 'Volume',
+            value: 0.5, // 0.5 liters = 500ml
+            unit: 'ml',
+            placeholder: 'Enter volume',
+            onChange: updateOutput
+        });
+        
+        // Temperature widget
+        widgets.temperature = new QuantityWidget({
+            dimension: 'Temperature',
+            value: 25, // 25°C
+            unit: 'C',
+            placeholder: 'Enter temperature',
+            onChange: updateOutput
+        });
+
+        // Attach widgets to DOM
+        document.getElementById('length-widget').appendChild(widgets.length.element);
+        document.getElementById('distance-widget').appendChild(widgets.distance.element);
+        document.getElementById('mass-widget').appendChild(widgets.mass.element);
+        document.getElementById('weight-widget').appendChild(widgets.weight.element);
+        document.getElementById('volume-widget').appendChild(widgets.volume.element);
+        document.getElementById('temperature-widget').appendChild(widgets.temperature.element);
+
+        function updateOutput() {
+            const outputDiv = document.getElementById('output-values');
+            const values = Object.entries(widgets).map(([name, widget]) => {
+                const value = widget.getValue();
+                const baseUnit = widget.options.baseUnit;
+                return `<div class="output-item">${name}: ${value.toFixed(6).replace(/\.?0+$/, '')} ${baseUnit}</div>`;
+            }).join('');
+            outputDiv.innerHTML = values;
+        }
+
+        // Global functions for controls
+        window.setTestValues = function() {
+            widgets.length.setValue(2.54, 'in'); // 1 inch
+            widgets.distance.setValue(1609.34, 'mi'); // 1 mile
+            widgets.mass.setValue(0.453592, 'lb'); // 1 pound
+            widgets.weight.setValue(0.001, 'g'); // 1 gram
+            widgets.volume.setValue(3.78541, 'gal'); // 1 gallon
+            widgets.temperature.setValue(0, 'F'); // 32°F (0°C)
+            updateOutput();
+        };
+
+        window.toggleDisabled = function() {
+            const disabled = !widgets.length.options.disabled;
+            Object.values(widgets).forEach(widget => widget.setDisabled(disabled));
+        };
+
+        window.changeDimensions = function() {
+            // This is just a demo - in real use, dimensions would be set by admin config
+            widgets.mass.setDimension('Volume');
+            widgets.volume.setDimension('Mass');
+            updateOutput();
+        };
+
+        window.clearValues = function() {
+            Object.values(widgets).forEach(widget => widget.setValue(0));
+            updateOutput();
+        };
+
+        // Initial output update
+        updateOutput();
+    </script>
+</body>
+</html>
