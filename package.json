@@ -1,0 +1,12 @@
+{
+  "name": "openbis-quantitywidget",
+  "version": "1.0.0",
+  "description": "Widget to show and edit quantities with assisgned unit",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
