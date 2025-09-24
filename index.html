@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCUM Unit Widget Demo</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="widget.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1>UCUM Unit Widget Demo</h1>
+    <p>The widgets below demonstrate the reusable UCUM-only quantity input component.</p>
+    <section class="demo-section">
+      <div id="current-widget" class="widget-host"></div>
+    </section>
+    <section class="demo-section">
+      <div id="temperature-widget" class="widget-host"></div>
+    </section>
+  </main>
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {
+      document.addEventListener('unitFloatSave', function (event) {
+        console.log('unitFloatSave event', event.detail);
+      });
+
+      createUnitFloatWidget({
+        container: document.getElementById('current-widget'),
+        label: 'Current (mA)',
+        initialRefValue: 0.02
+      });
+
+      createUnitFloatWidget({
+        container: document.getElementById('temperature-widget'),
+        label: 'Temperature (Cel)',
+        initialRefValue: 298.15
+      });
+    });
+  </script>
+</body>
+</html>

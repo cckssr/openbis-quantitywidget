@@ -1,0 +1,163 @@
+{
+  "_comment": "TODO: Extend this unit list with the complete UCUM-backed QUDT catalogue.",
+  "http://qudt.org/vocab/unit/M": {
+    "qk": "http://qudt.org/vocab/quantitykind/Length",
+    "ref": "http://qudt.org/vocab/unit/M",
+    "m": 1,
+    "b": 0,
+    "ucum": "m",
+    "label": "metre"
+  },
+  "http://qudt.org/vocab/unit/CM": {
+    "qk": "http://qudt.org/vocab/quantitykind/Length",
+    "ref": "http://qudt.org/vocab/unit/M",
+    "m": 0.01,
+    "b": 0,
+    "ucum": "cm",
+    "label": "centimetre"
+  },
+  "http://qudt.org/vocab/unit/KG": {
+    "qk": "http://qudt.org/vocab/quantitykind/Mass",
+    "ref": "http://qudt.org/vocab/unit/KG",
+    "m": 1,
+    "b": 0,
+    "ucum": "kg",
+    "label": "kilogram"
+  },
+  "http://qudt.org/vocab/unit/G": {
+    "qk": "http://qudt.org/vocab/quantitykind/Mass",
+    "ref": "http://qudt.org/vocab/unit/KG",
+    "m": 0.001,
+    "b": 0,
+    "ucum": "g",
+    "label": "gram"
+  },
+  "http://qudt.org/vocab/unit/S": {
+    "qk": "http://qudt.org/vocab/quantitykind/Time",
+    "ref": "http://qudt.org/vocab/unit/S",
+    "m": 1,
+    "b": 0,
+    "ucum": "s",
+    "label": "second"
+  },
+  "http://qudt.org/vocab/unit/MIN": {
+    "qk": "http://qudt.org/vocab/quantitykind/Time",
+    "ref": "http://qudt.org/vocab/unit/S",
+    "m": 60,
+    "b": 0,
+    "ucum": "min",
+    "label": "minute"
+  },
+  "http://qudt.org/vocab/unit/HR": {
+    "qk": "http://qudt.org/vocab/quantitykind/Time",
+    "ref": "http://qudt.org/vocab/unit/S",
+    "m": 3600,
+    "b": 0,
+    "ucum": "h",
+    "label": "hour"
+  },
+  "http://qudt.org/vocab/unit/A": {
+    "qk": "http://qudt.org/vocab/quantitykind/ElectricCurrent",
+    "ref": "http://qudt.org/vocab/unit/A",
+    "m": 1,
+    "b": 0,
+    "ucum": "A",
+    "label": "ampere"
+  },
+  "http://qudt.org/vocab/unit/MA": {
+    "qk": "http://qudt.org/vocab/quantitykind/ElectricCurrent",
+    "ref": "http://qudt.org/vocab/unit/A",
+    "m": 0.001,
+    "b": 0,
+    "ucum": "mA",
+    "label": "milliampere"
+  },
+  "http://qudt.org/vocab/unit/MicroA": {
+    "qk": "http://qudt.org/vocab/quantitykind/ElectricCurrent",
+    "ref": "http://qudt.org/vocab/unit/A",
+    "m": 0.000001,
+    "b": 0,
+    "ucum": "uA",
+    "label": "microampere"
+  },
+  "http://qudt.org/vocab/unit/V": {
+    "qk": "http://qudt.org/vocab/quantitykind/Voltage",
+    "ref": "http://qudt.org/vocab/unit/V",
+    "m": 1,
+    "b": 0,
+    "ucum": "V",
+    "label": "volt"
+  },
+  "http://qudt.org/vocab/unit/MilliV": {
+    "qk": "http://qudt.org/vocab/quantitykind/Voltage",
+    "ref": "http://qudt.org/vocab/unit/V",
+    "m": 0.001,
+    "b": 0,
+    "ucum": "mV",
+    "label": "millivolt"
+  },
+  "http://qudt.org/vocab/unit/K": {
+    "qk": "http://qudt.org/vocab/quantitykind/ThermodynamicTemperature",
+    "ref": "http://qudt.org/vocab/unit/K",
+    "m": 1,
+    "b": 0,
+    "ucum": "K",
+    "label": "kelvin"
+  },
+  "http://qudt.org/vocab/unit/DEG_C": {
+    "qk": "http://qudt.org/vocab/quantitykind/ThermodynamicTemperature",
+    "ref": "http://qudt.org/vocab/unit/K",
+    "m": 1,
+    "b": 273.15,
+    "ucum": "Cel",
+    "label": "degree Celsius"
+  },
+  "http://qudt.org/vocab/unit/DEG_F": {
+    "qk": "http://qudt.org/vocab/quantitykind/ThermodynamicTemperature",
+    "ref": "http://qudt.org/vocab/unit/K",
+    "m": 0.5555555555555556,
+    "b": 255.37222222222223,
+    "ucum": "[degF]",
+    "label": "degree Fahrenheit"
+  },
+  "http://qudt.org/vocab/unit/PA": {
+    "qk": "http://qudt.org/vocab/quantitykind/Pressure",
+    "ref": "http://qudt.org/vocab/unit/PA",
+    "m": 1,
+    "b": 0,
+    "ucum": "Pa",
+    "label": "pascal"
+  },
+  "http://qudt.org/vocab/unit/KiloPA": {
+    "qk": "http://qudt.org/vocab/quantitykind/Pressure",
+    "ref": "http://qudt.org/vocab/unit/PA",
+    "m": 1000,
+    "b": 0,
+    "ucum": "kPa",
+    "label": "kilopascal"
+  },
+  "http://qudt.org/vocab/unit/BAR": {
+    "qk": "http://qudt.org/vocab/quantitykind/Pressure",
+    "ref": "http://qudt.org/vocab/unit/PA",
+    "m": 100000,
+    "b": 0,
+    "ucum": "bar",
+    "label": "bar"
+  },
+  "http://qudt.org/vocab/unit/J": {
+    "qk": "http://qudt.org/vocab/quantitykind/Energy",
+    "ref": "http://qudt.org/vocab/unit/J",
+    "m": 1,
+    "b": 0,
+    "ucum": "J",
+    "label": "joule"
+  },
+  "http://qudt.org/vocab/unit/KiloJ": {
+    "qk": "http://qudt.org/vocab/quantitykind/Energy",
+    "ref": "http://qudt.org/vocab/unit/J",
+    "m": 1000,
+    "b": 0,
+    "ucum": "kJ",
+    "label": "kilojoule"
+  }
+}
