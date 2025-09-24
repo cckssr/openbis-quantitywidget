@@ -16,6 +16,22 @@
     "ucum": "cm",
     "label": "centimetre"
   },
+  "http://qudt.org/vocab/unit/MM": {
+    "qk": "http://qudt.org/vocab/quantitykind/Length",
+    "ref": "http://qudt.org/vocab/unit/M",
+    "m": 0.001,
+    "b": 0,
+    "ucum": "mm",
+    "label": "millimetre"
+  },
+  "http://qudt.org/vocab/unit/KM": {
+    "qk": "http://qudt.org/vocab/quantitykind/Length",
+    "ref": "http://qudt.org/vocab/unit/M",
+    "m": 1000,
+    "b": 0,
+    "ucum": "km",
+    "label": "kilometre"
+  },
   "http://qudt.org/vocab/unit/KG": {
     "qk": "http://qudt.org/vocab/quantitykind/Mass",
     "ref": "http://qudt.org/vocab/unit/KG",
@@ -31,6 +47,14 @@
     "b": 0,
     "ucum": "g",
     "label": "gram"
+  },
+  "http://qudt.org/vocab/unit/MG": {
+    "qk": "http://qudt.org/vocab/quantitykind/Mass",
+    "ref": "http://qudt.org/vocab/unit/KG",
+    "m": 1e-06,
+    "b": 0,
+    "ucum": "mg",
+    "label": "milligram"
   },
   "http://qudt.org/vocab/unit/S": {
     "qk": "http://qudt.org/vocab/quantitykind/Time",
@@ -56,6 +80,14 @@
     "ucum": "h",
     "label": "hour"
   },
+  "http://qudt.org/vocab/unit/DAY": {
+    "qk": "http://qudt.org/vocab/quantitykind/Time",
+    "ref": "http://qudt.org/vocab/unit/S",
+    "m": 86400,
+    "b": 0,
+    "ucum": "d",
+    "label": "day"
+  },
   "http://qudt.org/vocab/unit/A": {
     "qk": "http://qudt.org/vocab/quantitykind/ElectricCurrent",
     "ref": "http://qudt.org/vocab/unit/A",
@@ -75,10 +107,18 @@
   "http://qudt.org/vocab/unit/MicroA": {
     "qk": "http://qudt.org/vocab/quantitykind/ElectricCurrent",
     "ref": "http://qudt.org/vocab/unit/A",
-    "m": 0.000001,
+    "m": 1e-06,
     "b": 0,
     "ucum": "uA",
     "label": "microampere"
+  },
+  "http://qudt.org/vocab/unit/KiloA": {
+    "qk": "http://qudt.org/vocab/quantitykind/ElectricCurrent",
+    "ref": "http://qudt.org/vocab/unit/A",
+    "m": 1000,
+    "b": 0,
+    "ucum": "kA",
+    "label": "kiloampere"
   },
   "http://qudt.org/vocab/unit/V": {
     "qk": "http://qudt.org/vocab/quantitykind/Voltage",
@@ -95,6 +135,14 @@
     "b": 0,
     "ucum": "mV",
     "label": "millivolt"
+  },
+  "http://qudt.org/vocab/unit/KiloV": {
+    "qk": "http://qudt.org/vocab/quantitykind/Voltage",
+    "ref": "http://qudt.org/vocab/unit/V",
+    "m": 1000,
+    "b": 0,
+    "ucum": "kV",
+    "label": "kilovolt"
   },
   "http://qudt.org/vocab/unit/K": {
     "qk": "http://qudt.org/vocab/quantitykind/ThermodynamicTemperature",
@@ -115,8 +163,8 @@
   "http://qudt.org/vocab/unit/DEG_F": {
     "qk": "http://qudt.org/vocab/quantitykind/ThermodynamicTemperature",
     "ref": "http://qudt.org/vocab/unit/K",
-    "m": 0.5555555555555556,
-    "b": 255.37222222222223,
+    "m": "5/9",
+    "b": "229835/900",
     "ucum": "[degF]",
     "label": "degree Fahrenheit"
   },
@@ -144,6 +192,22 @@
     "ucum": "bar",
     "label": "bar"
   },
+  "http://qudt.org/vocab/unit/ATM": {
+    "qk": "http://qudt.org/vocab/quantitykind/Pressure",
+    "ref": "http://qudt.org/vocab/unit/PA",
+    "m": 101325,
+    "b": 0,
+    "ucum": "atm",
+    "label": "standard atmosphere"
+  },
+  "http://qudt.org/vocab/unit/MM_HG": {
+    "qk": "http://qudt.org/vocab/quantitykind/Pressure",
+    "ref": "http://qudt.org/vocab/unit/PA",
+    "m": 133.322387415,
+    "b": 0,
+    "ucum": "mm[Hg]",
+    "label": "millimetre of mercury"
+  },
   "http://qudt.org/vocab/unit/J": {
     "qk": "http://qudt.org/vocab/quantitykind/Energy",
     "ref": "http://qudt.org/vocab/unit/J",
@@ -159,5 +223,45 @@
     "b": 0,
     "ucum": "kJ",
     "label": "kilojoule"
+  },
+  "http://qudt.org/vocab/unit/ElectronVolt": {
+    "qk": "http://qudt.org/vocab/quantitykind/Energy",
+    "ref": "http://qudt.org/vocab/unit/J",
+    "m": "1.602176634e-19",
+    "b": 0,
+    "ucum": "eV",
+    "label": "electronvolt"
+  },
+  "http://qudt.org/vocab/unit/WH": {
+    "qk": "http://qudt.org/vocab/quantitykind/Energy",
+    "ref": "http://qudt.org/vocab/unit/J",
+    "m": 3600,
+    "b": 0,
+    "ucum": "W.h",
+    "label": "watt hour"
+  },
+  "http://qudt.org/vocab/unit/KiloWH": {
+    "qk": "http://qudt.org/vocab/quantitykind/Energy",
+    "ref": "http://qudt.org/vocab/unit/J",
+    "m": 3600000,
+    "b": 0,
+    "ucum": "kW.h",
+    "label": "kilowatt hour"
+  },
+  "http://qudt.org/vocab/unit/W": {
+    "qk": "http://qudt.org/vocab/quantitykind/Power",
+    "ref": "http://qudt.org/vocab/unit/W",
+    "m": 1,
+    "b": 0,
+    "ucum": "W",
+    "label": "watt"
+  },
+  "http://qudt.org/vocab/unit/KiloW": {
+    "qk": "http://qudt.org/vocab/quantitykind/Power",
+    "ref": "http://qudt.org/vocab/unit/W",
+    "m": 1000,
+    "b": 0,
+    "ucum": "kW",
+    "label": "kilowatt"
   }
 }

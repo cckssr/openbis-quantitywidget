@@ -1,6 +1,282 @@
 (function (global) {
   'use strict';
 
+  var TEN_BIGINT = 10n;
+
+  function isRational(value) {
+    return value && typeof value === 'object' && value.numerator !== undefined && value.denominator !== undefined;
+  }
+
+  function pow10BigInt(exponent) {
+    if (exponent <= 0) {
+      return 1n;
+    }
+    var base = TEN_BIGINT;
+    var result = 1n;
+    var power = BigInt(exponent);
+    while (power > 0n) {
+      if (power % 2n === 1n) {
+        result *= base;
+      }
+      base *= base;
+      power /= 2n;
+    }
+    return result;
+  }
+
+  function gcdBigInt(a, b) {
+    var x = a < 0n ? -a : a;
+    var y = b < 0n ? -b : b;
+    while (y !== 0n) {
+      var temp = x % y;
+      x = y;
+      y = temp;
+    }
+    return x;
+  }
+
+  function normalizeRational(rational) {
+    if (!rational) {
+      return null;
+    }
+    var numerator = rational.numerator;
+    var denominator = rational.denominator;
+    if (denominator === 0n) {
+      throw new Error('Invalid rational with zero denominator.');
+    }
+    if (numerator === 0n) {
+      return { numerator: 0n, denominator: 1n };
+    }
+    if (denominator < 0n) {
+      numerator = -numerator;
+      denominator = -denominator;
+    }
+    var divisor = gcdBigInt(numerator < 0n ? -numerator : numerator, denominator);
+    if (divisor > 1n) {
+      numerator /= divisor;
+      denominator /= divisor;
+    }
+    return { numerator: numerator, denominator: denominator };
+  }
+
+  function parseRational(value) {
+    if (value == null || value === '') {
+      return null;
+    }
+    if (isRational(value)) {
+      return normalizeRational(value);
+    }
+    if (typeof value === 'number') {
+      if (!Number.isFinite(value)) {
+        return null;
+      }
+      if (Object.is(value, 0)) {
+        return { numerator: 0n, denominator: 1n };
+      }
+      return parseRational(String(value));
+    }
+    var str = String(value).trim();
+    if (!str) {
+      return null;
+    }
+    var sign = 1n;
+    if (str.charAt(0) === '+') {
+      str = str.slice(1);
+    } else if (str.charAt(0) === '-') {
+      sign = -1n;
+      str = str.slice(1);
+    }
+    if (!str) {
+      return null;
+    }
+    var exponent = 0;
+    var fractionIndex = str.indexOf('/');
+    if (fractionIndex !== -1) {
+      var numeratorStr = str.slice(0, fractionIndex);
+      var denominatorStr = str.slice(fractionIndex + 1);
+      if (!numeratorStr || !denominatorStr) {
+        return null;
+      }
+      var numeratorRational = parseRational(numeratorStr);
+      var denominatorRational = parseRational(denominatorStr);
+      if (!numeratorRational || !denominatorRational || denominatorRational.numerator === 0n) {
+        return null;
+      }
+      var fraction = rationalDivide(numeratorRational, denominatorRational);
+      if (!fraction) {
+        return null;
+      }
+      if (sign < 0n) {
+        return normalizeRational({ numerator: -fraction.numerator, denominator: fraction.denominator });
+      }
+      return fraction;
+    }
+    var eIndex = str.toLowerCase().indexOf('e');
+    if (eIndex !== -1) {
+      exponent = parseInt(str.slice(eIndex + 1), 10);
+      if (!Number.isFinite(exponent)) {
+        exponent = 0;
+      }
+      str = str.slice(0, eIndex);
+    }
+    var decimalIndex = str.indexOf('.');
+    var fractionDigits = 0;
+    if (decimalIndex !== -1) {
+      fractionDigits = str.length - decimalIndex - 1;
+      str = str.slice(0, decimalIndex) + str.slice(decimalIndex + 1);
+    }
+    var digits = str.replace(/^0+/, '');
+    if (!digits) {
+      return { numerator: 0n, denominator: 1n };
+    }
+    if (!/^[0-9]+$/.test(digits)) {
+      return null;
+    }
+    var scale = exponent - fractionDigits;
+    var numerator = BigInt(digits);
+    var denominator = 1n;
+    if (scale >= 0) {
+      if (scale > 0) {
+        numerator *= pow10BigInt(scale);
+      }
+    } else {
+      denominator = pow10BigInt(-scale);
+    }
+    if (sign < 0n) {
+      numerator = -numerator;
+    }
+    return normalizeRational({ numerator: numerator, denominator: denominator });
+  }
+
+  function rationalZero() {
+    return { numerator: 0n, denominator: 1n };
+  }
+
+  function rationalOne() {
+    return { numerator: 1n, denominator: 1n };
+  }
+
+  function rationalAdd(a, b) {
+    if (!a || a.numerator === undefined) {
+      return b ? normalizeRational(b) : null;
+    }
+    if (!b || b.numerator === undefined) {
+      return normalizeRational(a);
+    }
+    var numerator = a.numerator * b.denominator + b.numerator * a.denominator;
+    var denominator = a.denominator * b.denominator;
+    return normalizeRational({ numerator: numerator, denominator: denominator });
+  }
+
+  function rationalSubtract(a, b) {
+    if (!b || b.numerator === undefined) {
+      return normalizeRational(a);
+    }
+    var neg = { numerator: -b.numerator, denominator: b.denominator };
+    return rationalAdd(a, neg);
+  }
+
+  function rationalMultiply(a, b) {
+    if (!a || !b) {
+      return null;
+    }
+    if (a.numerator === 0n || b.numerator === 0n) {
+      return rationalZero();
+    }
+    var numerator = a.numerator * b.numerator;
+    var denominator = a.denominator * b.denominator;
+    return normalizeRational({ numerator: numerator, denominator: denominator });
+  }
+
+  function rationalDivide(a, b) {
+    if (!a || !b) {
+      return null;
+    }
+    if (b.numerator === 0n) {
+      throw new Error('Division by zero in rational arithmetic.');
+    }
+    if (a.numerator === 0n) {
+      return rationalZero();
+    }
+    var numerator = a.numerator * b.denominator;
+    var denominator = a.denominator * b.numerator;
+    return normalizeRational({ numerator: numerator, denominator: denominator });
+  }
+
+  function rationalToNumber(rational) {
+    if (!rational) {
+      return NaN;
+    }
+    return Number(rational.numerator) / Number(rational.denominator);
+  }
+
+  function rationalToString(rational) {
+    if (!rational) {
+      return '';
+    }
+    if (rational.numerator === 0n) {
+      return '0';
+    }
+    var numerator = rational.numerator;
+    var denominator = rational.denominator;
+    var negative = numerator < 0n;
+    if (negative) {
+      numerator = -numerator;
+    }
+    var integerPart = numerator / denominator;
+    var remainder = numerator % denominator;
+    var digits = [];
+    var maxDigits = 24;
+    for (var guard = 0; guard < maxDigits && remainder !== 0n; guard += 1) {
+      remainder *= TEN_BIGINT;
+      var digit = remainder / denominator;
+      digits.push(digit);
+      remainder %= denominator;
+    }
+    var roundUp = false;
+    if (remainder !== 0n) {
+      var roundingDigit = (remainder * TEN_BIGINT) / denominator;
+      if (roundingDigit >= 5n) {
+        roundUp = true;
+      }
+    }
+    if (roundUp && digits.length) {
+      var idx = digits.length - 1;
+      while (idx >= 0) {
+        var val = digits[idx] + 1n;
+        if (val >= TEN_BIGINT) {
+          digits[idx] = 0n;
+          idx -= 1;
+        } else {
+          digits[idx] = val;
+          break;
+        }
+      }
+      if (idx < 0) {
+        integerPart += 1n;
+        digits = digits.map(function () { return 0n; });
+      }
+    }
+    while (digits.length && digits[digits.length - 1] === 0n) {
+      digits.pop();
+    }
+    var result = integerPart.toString();
+    if (digits.length) {
+      result += '.' + digits.map(function (d) { return d.toString(); }).join('');
+    }
+    if (negative && result !== '0') {
+      result = '-' + result;
+    }
+    return result;
+  }
+
+  function formatRationalForInput(rational) {
+    if (!rational) {
+      return '';
+    }
+    return rationalToString(rational);
+  }
+
   var widgetIdCounter = 0;
   var unitsCache = new Map();
 
@@ -36,13 +312,21 @@
       if (!entry.ucum) {
         return;
       }
+      var multiplierRational = parseRational(entry.m);
+      var offsetRational = parseRational(entry.b);
       var multiplier = Number(entry.m);
-      var offset = Number(entry.b);
       if (!Number.isFinite(multiplier)) {
-        multiplier = 1;
+        multiplier = multiplierRational ? rationalToNumber(multiplierRational) : 1;
       }
+      if (!multiplierRational) {
+        multiplierRational = rationalOne();
+      }
+      var offset = Number(entry.b);
       if (!Number.isFinite(offset)) {
-        offset = 0;
+        offset = offsetRational ? rationalToNumber(offsetRational) : 0;
+      }
+      if (!offsetRational) {
+        offsetRational = rationalZero();
       }
       var unit = {
         iri: iri,
@@ -50,6 +334,8 @@
         ref: entry.ref || null,
         m: multiplier,
         b: offset,
+        mRational: multiplierRational,
+        bRational: offsetRational,
         ucum: entry.ucum,
         label: entry.label || entry.ucum,
         log: entry.log === true
@@ -130,15 +416,31 @@
   }
 
   function convertToReference(value, unit) {
-    return value * unit.m + unit.b;
+    if (!unit) {
+      return null;
+    }
+    var rationalValue = parseRational(value);
+    if (!rationalValue) {
+      return null;
+    }
+    var product = rationalMultiply(rationalValue, unit.mRational);
+    return rationalAdd(product, unit.bRational);
   }
 
   function convertFromReference(refValue, unit) {
-    return (refValue - unit.b) / unit.m;
-  }
-
-  function formatNumberForInput(value) {
-    return Number.isFinite(value) ? String(value) : '';
+    if (!unit) {
+      return null;
+    }
+    var rationalValue = parseRational(refValue);
+    if (!rationalValue) {
+      return null;
+    }
+    var numerator = rationalSubtract(rationalValue, unit.bRational);
+    try {
+      return rationalDivide(numerator, unit.mRational);
+    } catch (err) {
+      return null;
+    }
   }
 
   function createUnitFloatWidget(options) {
@@ -233,9 +535,10 @@
     }
 
     var unitsUrl = options.unitsMapUrl || './units.ucum.json';
-    var initialRefValue = options.hasOwnProperty('initialRefValue') ? Number(options.initialRefValue) : 0;
-    if (!Number.isFinite(initialRefValue)) {
-      initialRefValue = 0;
+    var initialRefValueInput = options.hasOwnProperty('initialRefValue') ? options.initialRefValue : 0;
+    var initialRefValue = parseRational(initialRefValueInput);
+    if (!initialRefValue) {
+      initialRefValue = rationalZero();
     }
     var onSave = typeof options.onSave === 'function' ? options.onSave : null;
 
@@ -262,12 +565,16 @@
       if (!trimmed) {
         return null;
       }
-      var numeric = Number(trimmed);
-      if (!Number.isFinite(numeric)) {
+      var rational = parseRational(trimmed);
+      if (!rational) {
         inputEl.value = '';
         return null;
       }
-      return numeric;
+      var formatted = formatRationalForInput(rational);
+      if (formatted !== trimmed) {
+        inputEl.value = formatted;
+      }
+      return rational;
     }
 
     function changeUnit(newIri) {
@@ -297,12 +604,12 @@
       }
       var refValue = convertToReference(value, currentUnit);
       var newDisplay = convertFromReference(refValue, targetUnit);
-      if (!Number.isFinite(newDisplay)) {
+      if (!refValue || !newDisplay) {
         inputEl.value = '';
         showError('Conversion produced an invalid number.');
         return;
       }
-      inputEl.value = formatNumberForInput(newDisplay);
+      inputEl.value = formatRationalForInput(newDisplay);
       clearError();
     }
 
@@ -387,13 +694,13 @@
       state.refUnitIri = baseUnit.ref;
 
       var displayValue = convertFromReference(initialRefValue, baseUnit);
-      if (Number.isFinite(displayValue)) {
-        inputEl.value = formatNumberForInput(displayValue);
+      if (displayValue) {
+        inputEl.value = formatRationalForInput(displayValue);
       } else {
         inputEl.value = '';
       }
-      hiddenInput.value = Number.isFinite(initialRefValue) ? String(initialRefValue) : '';
-      state.lastRefValue = Number.isFinite(initialRefValue) ? initialRefValue : null;
+      hiddenInput.value = initialRefValue ? rationalToString(initialRefValue) : '';
+      state.lastRefValue = initialRefValue;
       selectEl.value = baseIri;
 
       var onSelectChange = function () {
@@ -418,7 +725,9 @@
             qk: unit.qk,
             displayValue: null,
             displayUCUM: unit.ucum,
-            displayUnitIri: unit.iri
+            displayUnitIri: unit.iri,
+            valueRefExact: null,
+            displayValueExact: null
           };
           var emptyEvent = new CustomEvent('unitFloatSave', {
             detail: emptyPayload,
@@ -432,19 +741,21 @@
           return;
         }
         var refValue = convertToReference(numeric, unit);
-        if (!Number.isFinite(refValue)) {
+        if (!refValue) {
           showError('Conversion produced an invalid number.');
           return;
         }
         state.lastRefValue = refValue;
-        hiddenInput.value = String(refValue);
+        hiddenInput.value = rationalToString(refValue);
         var payload = {
-          valueRef: refValue,
+          valueRef: rationalToNumber(refValue),
           refUnitIri: unit.ref,
           qk: unit.qk,
-          displayValue: numeric,
+          displayValue: rationalToNumber(numeric),
           displayUCUM: unit.ucum,
-          displayUnitIri: unit.iri
+          displayUnitIri: unit.iri,
+          valueRefExact: rationalToString(refValue),
+          displayValueExact: rationalToString(numeric)
         };
         var event = new CustomEvent('unitFloatSave', {
           detail: payload,
@@ -503,13 +814,15 @@
         if (!unit || numeric == null) {
           return null;
         }
-        return convertToReference(numeric, unit);
+        var ref = convertToReference(numeric, unit);
+        return ref ? rationalToNumber(ref) : null;
       },
       getDisplayValue: function () {
         if (!state.ready || state.destroyed) {
           return null;
         }
-        return readDisplayValue();
+        var rational = readDisplayValue();
+        return rational ? rationalToNumber(rational) : null;
       },
       getDisplayUCUM: function () {
         if (!state.ready || state.destroyed) {
@@ -535,12 +848,12 @@
           inputEl.value = '';
           return;
         }
-        var numeric = Number(value);
-        if (!Number.isFinite(numeric)) {
+        var rational = parseRational(value);
+        if (!rational) {
           inputEl.value = '';
           return;
         }
-        inputEl.value = formatNumberForInput(numeric);
+        inputEl.value = formatRationalForInput(rational);
       },
       destroy: function () {
         if (state.destroyed) {
@@ -564,6 +877,9 @@
     parseUnitTokenFromLabel: parseUnitTokenFromLabel,
     normalizeToken: normalizeToken,
     buildUCUMCandidates: buildUCUMCandidates,
+    parseRational: parseRational,
+    rationalToString: rationalToString,
+    rationalToNumber: rationalToNumber,
     convertToReference: convertToReference,
     convertFromReference: convertFromReference
   };
@@ -586,18 +902,18 @@
     assert(internal.normalizeToken('μA') === 'µA', 'Normalises Greek mu.');
     var candidates = internal.buildUCUMCandidates('µA');
     assert(candidates.indexOf('uA') !== -1, 'Includes ASCII micro candidate.');
-    var milliAmp = { m: 0.001, b: 0 };
-    var ampere = { m: 1, b: 0 };
-    var refFromMilli = internal.convertToReference(10, milliAmp);
-    assert(Math.abs(refFromMilli - 0.01) < 1e-12, 'Converts mA to reference A.');
+    var milliAmp = { mRational: internal.parseRational('0.001'), bRational: internal.parseRational('0') };
+    var ampere = { mRational: internal.parseRational('1'), bRational: internal.parseRational('0') };
+    var refFromMilli = internal.convertToReference('10', milliAmp);
+    assert(Math.abs(internal.rationalToNumber(refFromMilli) - 0.01) < 1e-12, 'Converts mA to reference A.');
     var milliFromRef = internal.convertFromReference(refFromMilli, milliAmp);
-    assert(Math.abs(milliFromRef - 10) < 1e-12, 'Converts reference back to mA.');
-    var fahrenheit = { m: 0.5555555555555556, b: 255.37222222222223 };
-    var celsius = { m: 1, b: 273.15 };
-    var refK = internal.convertToReference(32, fahrenheit);
-    assert(Math.abs(refK - 273.15) < 1e-9, 'Fahrenheit to Kelvin conversion works.');
+    assert(Math.abs(internal.rationalToNumber(milliFromRef) - 10) < 1e-12, 'Converts reference back to mA.');
+    var fahrenheit = { mRational: internal.parseRational('5/9'), bRational: internal.parseRational('229835/900') };
+    var celsius = { mRational: internal.parseRational('1'), bRational: internal.parseRational('273.15') };
+    var refK = internal.convertToReference('32', fahrenheit);
+    assert(Math.abs(internal.rationalToNumber(refK) - 273.15) < 1e-9, 'Fahrenheit to Kelvin conversion works.');
     var celsiusValue = internal.convertFromReference(refK, celsius);
-    assert(Math.abs(celsiusValue) < 1e-9, 'Kelvin to Celsius conversion works.');
+    assert(Math.abs(internal.rationalToNumber(celsiusValue)) < 1e-9, 'Kelvin to Celsius conversion works.');
     console.info('Unit widget self-tests passed:', assertions.length, 'checks');
   }
 
@@ -612,4 +928,7 @@
   }
 
   global.createUnitFloatWidget = createUnitFloatWidget;
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports.__unitWidgetInternal = internal;
+  }
 })(typeof window !== 'undefined' ? window : this);
