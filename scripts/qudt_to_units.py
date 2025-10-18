@@ -91,7 +91,9 @@ def _literal_to_decimal_string(literal: Optional[Literal], default: str) -> str:
 def _extract_quantity_kind_references(graph: Graph) -> Dict[str, str]:
     reference_by_qk: Dict[str, str] = {}
     for qk in graph.subjects(RDF.type, QUDT.QuantityKind):
-        ref = graph.value(qk, QUDT.referenceUnit) or graph.value(qk, QUDT.hasReferenceUnit)
+        ref = graph.value(qk, QUDT.referenceUnit) or graph.value(
+            qk, QUDT.hasReferenceUnit
+        )
         if ref is not None:
             reference_by_qk[str(qk)] = str(ref)
     return reference_by_qk
@@ -112,7 +114,9 @@ def _is_logarithmic(graph: Graph, subject: URIRef) -> bool:
     truthy_values = {Literal(True), Literal("true"), Literal("1")}
     if (subject, RDF.type, QUDT.LogarithmicUnit) in graph:
         return True
-    log_indicator = graph.value(subject, QUDT.isLogarithmic) or graph.value(subject, QUDT.hasLogarithmic)
+    log_indicator = graph.value(subject, QUDT.isLogarithmic) or graph.value(
+        subject, QUDT.hasLogarithmic
+    )
     if log_indicator in truthy_values:
         return True
     return False
@@ -124,17 +128,25 @@ def _unit_records(graph: Graph, reference_by_qk: Dict[str, str]) -> List[UnitRec
         ucum = graph.value(unit, QUDT.ucumCode)
         if not ucum:
             continue
-        quantity_kind = graph.value(unit, QUDT.hasQuantityKind) or graph.value(unit, QUDT.quantityKind)
+        quantity_kind = graph.value(unit, QUDT.hasQuantityKind) or graph.value(
+            unit, QUDT.quantityKind
+        )
         if quantity_kind is None:
             continue
         quantity_kind_iri = str(quantity_kind)
-        reference_unit = graph.value(unit, QUDT.referenceUnit) or graph.value(unit, QUDT.hasReferenceUnit)
+        reference_unit = graph.value(unit, QUDT.referenceUnit) or graph.value(
+            unit, QUDT.hasReferenceUnit
+        )
         if reference_unit is None:
             reference_unit = reference_by_qk.get(quantity_kind_iri)
         if reference_unit is None:
             continue
-        multiplier = graph.value(unit, QUDT.conversionMultiplier) or graph.value(unit, QUDT.hasConversionMultiplier)
-        offset = graph.value(unit, QUDT.conversionOffset) or graph.value(unit, QUDT.hasConversionOffset)
+        multiplier = graph.value(unit, QUDT.conversionMultiplier) or graph.value(
+            unit, QUDT.hasConversionMultiplier
+        )
+        offset = graph.value(unit, QUDT.conversionOffset) or graph.value(
+            unit, QUDT.hasConversionOffset
+        )
         label = _select_label(graph, unit)
         record = UnitRecord(
             iri=str(unit),
@@ -165,16 +177,30 @@ def convert(args: argparse.Namespace) -> Dict[str, Dict[str, object]]:
 
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate units.ucum.json from QUDT Turtle files.")
-    parser.add_argument("--units", nargs="+", required=True, help="Path(s) to QUDT unit ontology Turtle files.")
+    parser = argparse.ArgumentParser(
+        description="Generate units.ucum.json from QUDT Turtle files."
+    )
+    parser.add_argument(
+        "--units",
+        nargs="+",
+        required=True,
+        help="Path(s) to QUDT unit ontology Turtle files.",
+    )
     parser.add_argument(
         "--quantity-kinds",
         nargs="*",
         default=[],
         help="Optional path(s) to QUDT quantity kind Turtle files for reference unit lookups.",
     )
-    parser.add_argument("--output", required=True, help="Destination file for the generated JSON map.")
-    parser.add_argument("--indent", type=int, default=2, help="Indentation level for the output JSON (default: 2).")
+    parser.add_argument(
+        "--output", required=True, help="Destination file for the generated JSON map."
+    )
+    parser.add_argument(
+        "--indent",
+        type=int,
+        default=2,
+        help="Indentation level for the output JSON (default: 2).",
+    )
     parser.add_argument(
         "--skip-logarithmic",
         action="store_true",

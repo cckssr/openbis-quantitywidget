@@ -3,39 +3,193 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UCUM Unit Widget Demo</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="widget.js" defer></script>
+  <title>QUDT Unit Converter</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .input-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e1e5e9;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .result {
+      background: #f8f9fa;
+      border-radius: 6px;
+      padding: 20px;
+      margin-top: 20px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .base-unit {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .conversion-info {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .loading {
+      color: #999;
+      font-style: italic;
+    }
+  </style>
 </head>
 <body>
-  <main>
-    <h1>UCUM Unit Widget Demo</h1>
-    <p>The widgets below demonstrate the reusable UCUM-only quantity input component.</p>
-    <section class="demo-section">
-      <div id="current-widget" class="widget-host"></div>
-    </section>
-    <section class="demo-section">
-      <div id="temperature-widget" class="widget-host"></div>
-    </section>
-  </main>
+  <div class="container">
+    <h1>🔬 QUDT Unit Converter</h1>
+    
+    <div class="input-group">
+      <label for="value">Value:</label>
+      <input type="number" id="value" placeholder="Enter a number" step="any">
+    </div>
+    
+    <div class="input-group">
+      <label for="category">Category:</label>
+      <select id="category">
+        <option value="">Select a category...</option>
+      </select>
+    </div>
+    
+    <div class="input-group">
+      <label for="unit">Unit:</label>
+      <select id="unit" disabled>
+        <option value="">Select a unit...</option>
+      </select>
+    </div>
+    
+    <div class="result" id="result" style="display: none;">
+      <div class="loading">Loading units...</div>
+    </div>
+  </div>
+
   <script>
-    window.addEventListener('DOMContentLoaded', function () {
-      document.addEventListener('unitFloatSave', function (event) {
-        console.log('unitFloatSave event', event.detail);
+    let unitsData = null;
+    
+    // Load units data
+    fetch('units.compact.json')
+      .then(response => response.json())
+      .then(data => {
+        unitsData = data;
+        initializeInterface();
+      })
+      .catch(error => {
+        console.error('Error loading units:', error);
+        document.getElementById('result').innerHTML = '<div style="color: red;">Error loading units data</div>';
+        document.getElementById('result').style.display = 'block';
       });
-
-      createUnitFloatWidget({
-        container: document.getElementById('current-widget'),
-        label: 'Current (mA)',
-        initialRefValue: 0.02
+    
+    function initializeInterface() {
+      const categorySelect = document.getElementById('category');
+      const unitSelect = document.getElementById('unit');
+      const valueInput = document.getElementById('value');
+      const resultDiv = document.getElementById('result');
+      
+      // Populate categories
+      Object.keys(unitsData.categories).forEach(categoryKey => {
+        const option = document.createElement('option');
+        option.value = categoryKey;
+        option.textContent = unitsData.categories[categoryKey];
+        categorySelect.appendChild(option);
       });
-
-      createUnitFloatWidget({
-        container: document.getElementById('temperature-widget'),
-        label: 'Temperature (Cel)',
-        initialRefValue: 298.15
+      
+      // Handle category selection
+      categorySelect.addEventListener('change', function() {
+        const selectedCategory = this.value;
+        unitSelect.innerHTML = '<option value="">Select a unit...</option>';
+        unitSelect.disabled = !selectedCategory;
+        
+        if (selectedCategory && unitsData.units[selectedCategory]) {
+          unitsData.units[selectedCategory].forEach(unit => {
+            const option = document.createElement('option');
+            option.value = JSON.stringify(unit);
+            option.textContent = `${unit[1]} (${unit[0]})`;
+            unitSelect.appendChild(option);
+          });
+        }
+        
+        updateResult();
       });
-    });
+      
+      // Handle unit selection and value changes
+      unitSelect.addEventListener('change', updateResult);
+      valueInput.addEventListener('input', updateResult);
+      
+      function updateResult() {
+        const value = parseFloat(valueInput.value);
+        const selectedUnit = unitSelect.value;
+        
+        if (!value || !selectedUnit) {
+          resultDiv.style.display = 'none';
+          return;
+        }
+        
+        try {
+          const unit = JSON.parse(selectedUnit);
+          const multiplier = parseFloat(unit[2]);
+          const baseValue = value * multiplier;
+          
+          resultDiv.innerHTML = `
+            <div class="base-unit">
+              ${baseValue.toExponential(6)} (base unit)
+            </div>
+            <div class="conversion-info">
+              ${value} ${unit[0]} = ${baseValue.toExponential(6)} base units<br>
+              <strong>Unit:</strong> ${unit[1]} (${unit[0]})<br>
+              <strong>Multiplier:</strong> ${multiplier}
+            </div>
+          `;
+          resultDiv.style.display = 'block';
+        } catch (error) {
+          console.error('Error parsing unit:', error);
+          resultDiv.innerHTML = '<div style="color: red;">Error processing unit</div>';
+          resultDiv.style.display = 'block';
+        }
+      }
+    }
   </script>
 </body>
 </html>
