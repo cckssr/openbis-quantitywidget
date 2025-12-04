@@ -16,6 +16,24 @@ Example usage::
 The script only emits units that expose a UCUM code and have both a quantity
 kind and a reference unit.  Multipliers and offsets are normalised to strings to
 avoid floating point precision loss when serialising to JSON.
+
+Example output entry::
+    "MilliJ-PER-M2": {
+        "uri": "http://qudt.org/vocab/unit/MilliJ-PER-M2",
+        "ucumCode": "mJ.m-2",
+        "label": "Millijoule per Square Metre",
+        "quantityKind": [
+            "EnergyFluence",
+            "EnergyPerArea",
+            "RadiantFluence",
+            "StrainEnergyReleaseRate"
+        ],
+        "dimension": "A0E0L0I0M1H0T-2D0",
+        "multiplier": 0.001,
+        "offset": 0,
+        "baseUnit": "KiloGM-SEC2",
+        "logarithmic": false
+      }
 """
 
 from __future__ import annotations
@@ -42,26 +60,45 @@ QUANTITY_KIND = Namespace("http://qudt.org/vocab/quantitykind/")
 
 @dataclass
 class UnitRecord:
-    iri: str
-    quantity_kind: str
-    reference_unit: str
-    multiplier: str
-    offset: str
-    ucum: str
-    label: str
-    logarithmic: bool = False
+    uri: str  # URI of the unit
+    ucum: str  # UCUM code
+    label: str  # Human-readable label
+    quantity_kinds: List[str]  # Quantity kind identifiers (extracted from IRIs)
+    dimension: str  # Dimension vector as a string
+    multiplier: str  # Conversion multiplier as a string
+    offset: str = "0"  # Conversion offset as a string
+    logarithmic: bool = False  # Whether the unit is logarithmic
+    base_unit: Optional[str] = None  # Base unit identifier (set in second pass)
+
+    @property
+    def identifier(self) -> str:
+        """Extract identifier from URI (last segment after '/')."""
+        return self.uri.rsplit("/", 1)[-1]
+
+    def is_base_unit(self) -> bool:
+        """Check if this unit is a base unit (multiplier=1, offset=0)."""
+        return self.multiplier == "1" and self.offset == "0"
 
     def to_json(self) -> Dict[str, object]:
         data: Dict[str, object] = {
-            "qk": self.quantity_kind,
-            "ref": self.reference_unit,
-            "m": self.multiplier,
-            "b": self.offset,
-            "ucum": self.ucum,
+            "uri": self.uri,
+            "ucumCode": self.ucum,
             "label": self.label,
+            "quantityKind": self.quantity_kinds,
+            "dimension": self.dimension,
+            "multiplier": (
+                float(self.multiplier)
+                if "." in self.multiplier or "e" in self.multiplier.lower()
+                else int(self.multiplier)
+            ),
+            "offset": (
+                float(self.offset)
+                if "." in self.offset or "e" in self.offset.lower()
+                else int(self.offset)
+            ),
+            "baseUnit": self.base_unit,
+            "logarithmic": self.logarithmic,
         }
-        if self.logarithmic:
-            data["log"] = True
         return data
 
 
@@ -83,8 +120,12 @@ def _literal_to_decimal_string(literal: Optional[Literal], default: str) -> str:
     normalised = value.normalize()
     if normalised == 0:
         return "0"
-    if normalised == normalised.to_integral():
-        return format(normalised.quantize(Decimal(1)), "f")
+    # Check if it's an integer (no decimal part)
+    try:
+        if normalised == normalised.to_integral_value():
+            return str(int(normalised))
+    except (InvalidOperation, ValueError):
+        pass
     return format(normalised, "f")
 
 
@@ -128,30 +169,43 @@ def _unit_records(graph: Graph, reference_by_qk: Dict[str, str]) -> List[UnitRec
         ucum = graph.value(unit, QUDT.ucumCode)
         if not ucum:
             continue
-        quantity_kind = graph.value(unit, QUDT.hasQuantityKind) or graph.value(
-            unit, QUDT.quantityKind
-        )
-        if quantity_kind is None:
+
+        # Collect ALL quantity kinds for this unit
+        quantity_kinds: List[str] = []
+        for qk in graph.objects(unit, QUDT.hasQuantityKind):
+            qk_id = str(qk).rsplit("/", 1)[-1]
+            quantity_kinds.append(qk_id)
+        # Also check alternative predicate
+        for qk in graph.objects(unit, QUDT.quantityKind):
+            qk_id = str(qk).rsplit("/", 1)[-1]
+            if qk_id not in quantity_kinds:
+                quantity_kinds.append(qk_id)
+
+        if not quantity_kinds:
             continue
-        quantity_kind_iri = str(quantity_kind)
-        reference_unit = graph.value(unit, QUDT.referenceUnit) or graph.value(
-            unit, QUDT.hasReferenceUnit
-        )
-        if reference_unit is None:
-            reference_unit = reference_by_qk.get(quantity_kind_iri)
-        if reference_unit is None:
-            continue
+
         multiplier = graph.value(unit, QUDT.conversionMultiplier) or graph.value(
             unit, QUDT.hasConversionMultiplier
         )
+
         offset = graph.value(unit, QUDT.conversionOffset) or graph.value(
             unit, QUDT.hasConversionOffset
         )
+
+        # Get dimension vector from the graph
+        dimension_vector = graph.value(unit, QUDT.hasDimensionVector)
+        if dimension_vector:
+            # Extract dimension string from URI like "http://qudt.org/vocab/dimensionvector/A0E0L1I0M0H0T-2D0"
+            dimension = str(dimension_vector).rsplit("/", 1)[-1]
+        else:
+            dimension = "A0E0L0I0M0H0T0D0"  # Dimensionless fallback
+
         label = _select_label(graph, unit)
+
         record = UnitRecord(
-            iri=str(unit),
-            quantity_kind=quantity_kind_iri,
-            reference_unit=str(reference_unit),
+            uri=str(unit),
+            quantity_kinds=sorted(quantity_kinds),
+            dimension=dimension,
             multiplier=_literal_to_decimal_string(multiplier, "1"),
             offset=_literal_to_decimal_string(offset, "0"),
             ucum=str(ucum),
@@ -162,14 +216,120 @@ def _unit_records(graph: Graph, reference_by_qk: Dict[str, str]) -> List[UnitRec
     return records
 
 
+def _find_base_units_by_dimension(records: List[UnitRecord]) -> Dict[str, str]:
+    """
+    Find base units for each dimension by looking for units with multiplier=1 and offset=0.
+    Prefers shorter/simpler unit names (likely SI base units) and non-logarithmic units.
+    Returns a mapping from dimension string to base unit identifier.
+    """
+    base_units: Dict[str, str] = {}
+    base_unit_scores: Dict[str, int] = {}  # Lower score = better candidate
+
+    def score_unit(record: UnitRecord) -> int:
+        """Score a unit - lower is better for being a base unit."""
+        score = 0
+        name = record.identifier
+
+        # Penalize logarithmic units heavily
+        if record.logarithmic:
+            score += 1000
+
+        # Penalize units with "PER" (derived units)
+        score += name.count("-PER-") * 50
+        score += name.count("PER-") * 50
+
+        # Penalize units with prefixes (Milli, Micro, Kilo, etc.)
+        # Exception: KiloGM (kilogram) is the SI base unit for mass
+        prefixes = [
+            "Milli",
+            "Micro",
+            "Nano",
+            "Pico",
+            "Femto",
+            "Atto",
+            "Centi",
+            "Deci",
+            "Deca",
+            "Hecto",
+            "Mega",
+            "Giga",
+            "Tera",
+            "Peta",
+        ]
+        for prefix in prefixes:
+            if prefix in name and not (name == "KiloGM" or name.startswith("KiloGM-")):
+                score += 100
+
+        # Penalize DeciB (decibel) units
+        if "DeciB" in name:
+            score += 500
+
+        # Penalize complex names (more hyphens = more complex)
+        score += name.count("-") * 10
+
+        # Prefer shorter names
+        score += len(name)
+
+        return score
+
+    for record in records:
+        if record.is_base_unit():
+            dim = record.dimension
+            current_score = score_unit(record)
+
+            if dim not in base_units or current_score < base_unit_scores[dim]:
+                base_units[dim] = record.identifier
+                base_unit_scores[dim] = current_score
+
+    return base_units
+
+
+def _assign_base_units(records: List[UnitRecord], base_units: Dict[str, str]) -> None:
+    """
+    Second pass: assign base_unit to each record based on its dimension.
+    Only assigns base_unit if it actually exists in the record list.
+    """
+    # Build a set of all available unit identifiers for validation
+    available_units = {record.identifier for record in records}
+
+    for record in records:
+        if record.dimension in base_units:
+            base_unit_id = base_units[record.dimension]
+            # Only assign if the base unit actually exists in our dataset
+            if base_unit_id in available_units:
+                record.base_unit = base_unit_id
+            else:
+                # Base unit not in dataset - check if this record itself is a base unit
+                if record.is_base_unit():
+                    record.base_unit = record.identifier
+                else:
+                    record.base_unit = None
+        else:
+            # No base unit found for this dimension - use own identifier if it's a base unit
+            if record.is_base_unit():
+                record.base_unit = record.identifier
+            else:
+                record.base_unit = None
+
+
 def convert(args: argparse.Namespace) -> Dict[str, Dict[str, object]]:
     graph = _load_graph(args.units + args.quantity_kinds)
     reference_by_qk = _extract_quantity_kind_references(graph)
+
+    # First pass: collect all unit records
+    records = _unit_records(graph, reference_by_qk)
+
+    # Second pass: find base units by dimension and assign them
+    base_units = _find_base_units_by_dimension(records)
+    _assign_base_units(records, base_units)
+
+    # Build result dictionary
     result: Dict[str, Dict[str, object]] = {}
-    for record in _unit_records(graph, reference_by_qk):
+    for record in records:
         if args.skip_logarithmic and record.logarithmic:
             continue
-        result[record.iri] = record.to_json()
+        result[record.identifier] = record.to_json()
+
     if args.sort:
         ordered = dict(sorted(result.items(), key=lambda item: item[0]))
         return ordered
