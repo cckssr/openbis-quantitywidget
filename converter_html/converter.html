@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UCUM Unit Converter</title>
+    <link rel="stylesheet" href="converter.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔬 UCUM Unit Converter</h1>
+      <p class="subtitle">Convert between compatible units using UCUM codes</p>
+
+      <!-- Input Unit Section -->
+      <div class="section">
+        <div class="section-title">Source Unit</div>
+        <div class="input-row">
+          <div class="input-group">
+            <label for="ucum-code">UCUM Code</label>
+            <input
+              type="text"
+              id="ucum-code"
+              placeholder="e.g., kg.m-2, m/s, Cel, F"
+              spellcheck="false"
+              title="Enter a unit code in UCUM notation. Examples: kg, m/s, degC, m-2"
+            />
+          </div>
+          <div class="input-group">
+            <label for="value">Value</label>
+            <input
+              type="number"
+              id="value"
+              placeholder="Enter a number"
+              step="any"
+              value="1"
+              title="Enter the numeric value you want to convert"
+            />
+          </div>
+        </div>
+
+        <!-- Detailed Information to Source Unit -->
+        <div id="source-info" class="unit-info" style="display: none">
+          <div class="unit-info-item">
+            <span class="unit-info-label" title="The full name of the unit">Unit Name:</span>
+            <span class="unit-info-value" id="source-label">-</span>
+          </div>
+          <div class="unit-info-item">
+            <span class="unit-info-label" title="Dimensional formula showing physical quantities">Dimension:</span>
+            <span class="unit-info-value" id="source-dimension">-</span>
+          </div>
+          <div class="unit-info-item">
+            <span class="unit-info-label" title="The fundamental unit this unit derives from">Base Unit:</span>
+            <span class="unit-info-value" id="source-base-unit">-</span>
+          </div>
+          <div class="unit-info-item">
+            <span class="unit-info-label" title="Physical quantities this unit measures">Quantity Kinds:</span>
+            <span class="unit-info-value" id="source-qk">-</span>
+          </div>
+        </div>
+
+        <div id="error" class="error"></div>
+      </div>
+
+      <!-- Target Unit Section -->
+      <div class="section">
+        <div class="section-title">Target Unit</div>
+        <div class="input-group">
+          <label for="target-unit-search">Select Target Unit</label>
+          <div class="dropdown-wrapper">
+            <input
+              type="text"
+              id="target-unit-search"
+              class="dropdown-search"
+              placeholder="Search units by name or UCUM code..."
+              spellcheck="false"
+              title="Search and select a compatible target unit for conversion"
+            />
+            <div id="target-unit-dropdown" class="dropdown-list">
+              <div class="loading">Loading units...</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="conversion-result" class="conversion-result">
+          <div class="result-value" id="result-value">-</div>
+          <div class="result-info" id="result-info">-</div>
+        </div>
+      </div>
+      <!-- Statistics -->
+      <div class="stats" id="stats" style="display: none">
+        <div class="stat-item" title="Total number of units in the database">
+          <div class="stat-number" id="stat-total">-</div>
+          <div class="stat-label">Total Units</div>
+        </div>
+        <div class="stat-item" title="Number of units compatible with the selected source unit">
+          <div class="stat-number" id="stat-compatible">-</div>
+          <div class="stat-label">Compatible Units</div>
+        </div>
+        <div class="stat-item" title="Number of unique base units in the database">
+          <div class="stat-number" id="stat-unique-bases">-</div>
+          <div class="stat-label">Unique Base Units</div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <script src="converter.js"></script>
+  </body>
+</html>
