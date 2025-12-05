@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QUDT Ontology Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="ontology_visualization.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>🔬 QUDT Ontology Visualization</h1>
+        <p class="subtitle">
+          Interactive visualization of Units, Quantity Kinds, and Dimension
+          Vectors
+        </p>
+      </header>
+
+      <!-- Navigation Tabs -->
+      <nav class="tab-navigation">
+        <button class="tab-btn active" data-tab="network">Network Graph</button>
+        <button class="tab-btn" data-tab="hierarchy">Hierarchy Tree</button>
+        <button class="tab-btn" data-tab="sunburst">Sunburst Chart</button>
+        <button class="tab-btn" data-tab="matrix">Relationship Matrix</button>
+      </nav>
+
+      <!-- Controls Panel -->
+      <div class="controls-panel">
+        <div class="control-group">
+          <label for="filter-type">Filter by Type:</label>
+          <select id="filter-type">
+            <option value="all">All</option>
+            <option value="unit">Units</option>
+            <option value="quantitykind">Quantity Kinds</option>
+            <option value="dimension">Dimension Vectors</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="search-input">Search:</label>
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search entities..."
+          />
+        </div>
+        <div class="control-group">
+          <label for="zoom-slider">Zoom:</label>
+          <input
+            type="range"
+            id="zoom-slider"
+            min="0.2"
+            max="3"
+            step="0.1"
+            value="1"
+          />
+        </div>
+        <button class="btn reset-btn" id="reset-view">Reset View</button>
+      </div>
+
+      <!-- Main Visualization Area -->
+      <div class="visualization-container">
+        <!-- Network Graph Tab -->
+        <div class="tab-content active" id="network-tab">
+          <svg id="network-svg"></svg>
+        </div>
+
+        <!-- Hierarchy Tree Tab -->
+        <div class="tab-content" id="hierarchy-tab">
+          <svg id="hierarchy-svg"></svg>
+        </div>
+
+        <!-- Sunburst Chart Tab -->
+        <div class="tab-content" id="sunburst-tab">
+          <svg id="sunburst-svg"></svg>
+        </div>
+
+        <!-- Relationship Matrix Tab -->
+        <div class="tab-content" id="matrix-tab">
+          <svg id="matrix-svg"></svg>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="legend">
+        <h3>Legend</h3>
+        <div class="legend-items">
+          <div class="legend-item">
+            <span class="legend-color unit"></span>
+            <span>Units (e.g., Meter, Kilogram)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color quantitykind"></span>
+            <span>Quantity Kinds (e.g., Length, Mass)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color dimension"></span>
+            <span>Dimension Vectors (e.g., L¹M⁰T⁰)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-line has-quantitykind"></span>
+            <span>hasQuantityKind relationship</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-line has-dimension"></span>
+            <span>hasDimensionVector relationship</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-line broader"></span>
+            <span>skos:broader (parent relationship)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info Panel -->
+      <div class="info-panel" id="info-panel">
+        <button class="close-btn" id="close-info">&times;</button>
+        <h3 id="info-title">Select an entity</h3>
+        <div id="info-content">
+          <p class="info-hint">Click on any node to see details</p>
+        </div>
+      </div>
+
+      <!-- Statistics Panel -->
+      <div class="stats-panel">
+        <h3>📊 Statistics</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-value" id="stat-units">--</span>
+            <span class="stat-label">Units</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="stat-quantitykinds">--</span>
+            <span class="stat-label">Quantity Kinds</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="stat-dimensions">--</span>
+            <span class="stat-label">Dimensions</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="stat-relationships">--</span>
+            <span class="stat-label">Relationships</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="ontology_visualization.js"></script>
+  </body>
+</html>
