@@ -32,7 +32,8 @@ class OpenBISDemoWidget {
             }));
 
             // Get source unit from configuration
-            const sourceUnitCode = document.getElementById('source-unit-config').value;
+            const sourceUnitConfigEl = document.getElementById('source-unit-config');
+            const sourceUnitCode = sourceUnitConfigEl ? sourceUnitConfigEl.value : 'kg';
             this.setSourceUnit(sourceUnitCode);
 
             this.setupEventListeners();
@@ -117,36 +118,52 @@ class OpenBISDemoWidget {
     }
 
     /**
+     * Render dropdown items HTML from a list of units.
+     * @param {Array} units - Array of unit objects to render
+     * @returns {string} HTML string for dropdown items
+     */
+    renderDropdownItems(units) {
+        if (units.length === 0) {
+            return '<div class="no-results">No compatible units found</div>';
+        }
+        return units
+            .map(u => `
+                <div class="dropdown-item" data-unit-id="${u.id}">
+                    <div class="dropdown-item-ucum">${u.ucumCode}</div>
+                    <div class="dropdown-item-label">${u.label || u.id}</div>
+                </div>
+            `)
+            .join('');
+    }
+
+    /**
+     * Filter compatible units by search text.
+     * @param {string} searchText - The search text to filter by
+     * @returns {Array} Filtered array of compatible units
+     */
+    filterCompatibleUnits(searchText) {
+        const compatible = this.getCompatibleUnits();
+        if (!searchText) {
+            return compatible;
+        }
+        const lowerSearch = searchText.toLowerCase();
+        return compatible.filter(u =>
+            u.ucumCode.toLowerCase().includes(lowerSearch) ||
+            (u.label && u.label.toLowerCase().includes(lowerSearch))
+        );
+    }
+
+    /**
      * Filter and display compatible units in dropdown.
      * @param {string} dropdownId - The ID of the dropdown element
      * @param {string} searchId - The ID of the search input
      */
     filterAndShowUnits(dropdownId, searchId) {
-        const searchText = document.getElementById(searchId).value.toLowerCase();
-        const compatible = this.getCompatibleUnits();
-
-        let filtered = compatible;
-        if (searchText) {
-            filtered = compatible.filter(u =>
-                u.ucumCode.toLowerCase().includes(searchText) ||
-                (u.label && u.label.toLowerCase().includes(searchText))
-            );
-        }
+        const searchText = document.getElementById(searchId).value;
+        const filtered = this.filterCompatibleUnits(searchText);
 
         const dropdown = document.getElementById(dropdownId);
-        if (filtered.length === 0) {
-            dropdown.innerHTML = '<div class="no-results">No compatible units found</div>';
-        } else {
-            dropdown.innerHTML = filtered
-                .map(u => `
-                    <div class="dropdown-item" data-unit-id="${u.id}">
-                        <div class="dropdown-item-ucum">${u.ucumCode}</div>
-                        <div class="dropdown-item-label">${u.label || u.id}</div>
-                    </div>
-                `)
-                .join('');
-        }
-
+        dropdown.innerHTML = this.renderDropdownItems(filtered);
         dropdown.classList.add('show');
     }
 
@@ -370,30 +387,10 @@ class OpenBISDemoWidget {
     filterSavedCardDropdown(cardId) {
         const searchInput = document.getElementById(`saved-unit-search-${cardId}`);
         const dropdown = document.getElementById(`saved-unit-dropdown-${cardId}`);
-        const searchText = searchInput.value.toLowerCase();
-        const compatible = this.getCompatibleUnits();
+        const searchText = searchInput.value;
+        const filtered = this.filterCompatibleUnits(searchText);
 
-        let filtered = compatible;
-        if (searchText) {
-            filtered = compatible.filter(u =>
-                u.ucumCode.toLowerCase().includes(searchText) ||
-                (u.label && u.label.toLowerCase().includes(searchText))
-            );
-        }
-
-        if (filtered.length === 0) {
-            dropdown.innerHTML = '<div class="no-results">No compatible units found</div>';
-        } else {
-            dropdown.innerHTML = filtered
-                .map(u => `
-                    <div class="dropdown-item" data-unit-id="${u.id}">
-                        <div class="dropdown-item-ucum">${u.ucumCode}</div>
-                        <div class="dropdown-item-label">${u.label || u.id}</div>
-                    </div>
-                `)
-                .join('');
-        }
-
+        dropdown.innerHTML = this.renderDropdownItems(filtered);
         dropdown.classList.add('show');
     }
 
