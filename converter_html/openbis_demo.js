@@ -52,7 +52,9 @@ class OpenBISDemoWidget {
         if (unit) {
             this.sourceUnit = unit;
             this.selectedDisplayUnit = unit;
+            // Update both the input label and the storage unit info
             document.getElementById('source-unit-display').textContent = ucumCode;
+            document.getElementById('storage-unit-display').textContent = ucumCode;
             document.getElementById('display-unit-search').value = unit.ucumCode;
         } else {
             this.showError(`Source unit "${ucumCode}" not found`);
@@ -64,6 +66,7 @@ class OpenBISDemoWidget {
      */
     setupEventListeners() {
         const displaySearch = document.getElementById('display-unit-search');
+        const valueInput = document.getElementById('input-value');
         const saveBtn = document.getElementById('save-btn');
 
         // Dropdown events
@@ -86,6 +89,41 @@ class OpenBISDemoWidget {
 
         // Save button
         saveBtn.addEventListener('click', () => this.saveValue());
+
+        // Tab navigation: cycle between input and dropdown only
+        valueInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab' && !e.shiftKey) {
+                e.preventDefault();
+                displaySearch.focus();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                this.saveValue();
+            }
+        });
+
+        displaySearch.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    valueInput.focus();
+                } else {
+                    valueInput.focus();
+                }
+                this.hideAllDropdowns();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                // Select first item if dropdown is open and has items
+                const dropdown = document.getElementById('display-unit-dropdown');
+                const firstItem = dropdown.querySelector('.dropdown-item');
+                if (firstItem && dropdown.classList.contains('show')) {
+                    this.selectDisplayUnit(firstItem.dataset.unitId);
+                }
+                this.hideAllDropdowns();
+            } else if (e.key === 'Escape') {
+                this.hideAllDropdowns();
+                valueInput.focus();
+            }
+        });
     }
 
     /**
@@ -165,6 +203,11 @@ class OpenBISDemoWidget {
         const dropdown = document.getElementById(dropdownId);
         dropdown.innerHTML = this.renderDropdownItems(filtered);
         dropdown.classList.add('show');
+
+        // Auto-select if exactly one unit matches
+        if (filtered.length === 1 && searchText.length > 0) {
+            this.selectDisplayUnit(filtered[0].id);
+        }
     }
 
     /**
@@ -177,6 +220,8 @@ class OpenBISDemoWidget {
 
         this.selectedDisplayUnit = { id: unitId, ...unit };
         document.getElementById('display-unit-search').value = unit.ucumCode;
+        // Update the input label to show the selected display unit
+        document.getElementById('source-unit-display').textContent = unit.ucumCode;
         this.hideAllDropdowns();
     }
 
