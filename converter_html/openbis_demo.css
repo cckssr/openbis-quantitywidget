@@ -1,0 +1,180 @@
+/* OpenBIS Demo specific styles */
+
+.button-row {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.save-button {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.save-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.save-button:active {
+    transform: translateY(0);
+}
+
+.save-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Saved value card */
+.saved-value-card {
+    background: #f8f9fa;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.saved-value-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.saved-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.saved-card-title {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.saved-card-timestamp {
+    font-size: 12px;
+    color: #999;
+}
+
+.saved-card-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.saved-value-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.saved-value-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.saved-value-display {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #e1e5e9;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 16px;
+    color: #333;
+}
+
+.stored-value {
+    background: #e8f5e9;
+    border-color: #4caf50;
+    color: #1b5e20;
+}
+
+/* Readonly dropdown wrapper */
+.saved-dropdown-wrapper {
+    position: relative;
+}
+
+.saved-dropdown-search {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background: white;
+    cursor: pointer;
+}
+
+.saved-dropdown-search:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.saved-dropdown-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid #e1e5e9;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.saved-dropdown-list.show {
+    display: block;
+}
+
+/* Info display below saved value */
+.saved-conversion-info {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #666;
+    text-align: right;
+}
+
+.delete-btn {
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+    background: #d32f2f;
+}
+
+@media (max-width: 600px) {
+    .saved-card-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .saved-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
