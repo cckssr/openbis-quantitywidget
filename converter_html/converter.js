@@ -348,7 +348,7 @@ class UnitConverter {
      */
     toReferenceUnit(value, unit) {
         // reference = (value * multiplier) + offset
-        return (value * unit.multiplier) + unit.offset;
+        return value * (unit.multiplier + unit.offset); // Corrected formula
     }
 
     /**
