@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenBIS Quantity Widget Demo</title>
+    <link rel="stylesheet" href="converter.css" />
+    <link rel="stylesheet" href="openbis_demo.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔬 OpenBIS Quantity Widget Demo</h1>
+      <p class="subtitle">
+        Input values with unit conversion for OpenBIS integration
+      </p>
+
+      <!-- Editable Input Section -->
+      <div class="section" id="input-section">
+        <div class="section-title">Input Value</div>
+        <div class="info-box">
+          <strong>Storage Unit:</strong>
+          <span id="storage-unit-display">kg</span>
+          <span class="info-hint"
+            >— Values will be converted to this unit when saved</span
+          >
+        </div>
+        <div class="input-row">
+          <div class="input-group">
+            <label for="input-value" id="input-label"
+              >Value (<span id="source-unit-display">kg</span>)</label
+            >
+            <input
+              type="number"
+              id="input-value"
+              placeholder="Enter a number"
+              step="any"
+              title="Enter the numeric value"
+            />
+          </div>
+          <div class="input-group">
+            <label for="display-unit-select">Display Unit</label>
+            <div class="dropdown-wrapper">
+              <input
+                type="text"
+                id="display-unit-search"
+                class="dropdown-search"
+                placeholder="Search compatible units..."
+                spellcheck="false"
+                title="Select a unit to display the value in"
+              />
+              <div id="display-unit-dropdown" class="dropdown-list">
+                <div class="loading">Loading units...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="input-error" class="error"></div>
+
+        <div class="button-row">
+          <button type="button" id="save-btn" class="save-button">
+            💾 Save Value
+          </button>
+        </div>
+      </div>
+
+      <!-- Saved Values Section -->
+      <div class="section" id="saved-section" style="display: none">
+        <div class="section-title">Saved Values</div>
+        <div id="saved-values-container"></div>
+      </div>
+
+      <!-- Hidden field for source unit configuration -->
+      <input type="hidden" id="source-unit-config" value="m" />
+    </div>
+
+    <script src="openbis_demo.js"></script>
+  </body>
+</html>
